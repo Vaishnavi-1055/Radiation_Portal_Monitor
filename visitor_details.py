@@ -14,16 +14,16 @@ PIR_ZMQ_ADDR     = "tcp://127.0.0.1:5555"
 VISITOR_ZMQ_PORT = 6008
 
 # ── Config ───────────────────────────────────────────────────────
-TIMEOUT_SECONDS = 10     # reset incomplete sequence after 10 s
+TIMEOUT_SECONDS = 10     
 MAX_VISITORS    = 100
 
 # ── State Machine ────────────────────────────────────────────────
 class State(Enum):
     IDLE       = auto()
-    SEQ_LR_P1  = auto()   # saw LEFT,  waiting for TOP  (L→T→R)
-    SEQ_LR_P12 = auto()   # saw TOP,   waiting for RIGHT (L→T→R)
-    SEQ_RL_P1  = auto()   # saw RIGHT, waiting for TOP  (R→T→L)
-    SEQ_RL_P12 = auto()   # saw TOP,   waiting for LEFT  (R→T→L)
+    SEQ_LR_P1  = auto()   # LEFT,  waiting for TOP   (L→T→R)
+    SEQ_LR_P12 = auto()   # TOP,   waiting for RIGHT (L→T→R)
+    SEQ_RL_P1  = auto()   # RIGHT, waiting for TOP   (R→T→L)
+    SEQ_RL_P12 = auto()   # TOP,   waiting for LEFT  (R→T→L)
 
 
 class VisitorPortal:
@@ -89,7 +89,6 @@ class VisitorPortal:
     def run(self):
         try:
             while True:
-                # Timeout stalled incomplete sequences
                 if (self.state != State.IDLE
                         and self.state_time is not None
                         and time.time() - self.state_time > TIMEOUT_SECONDS):
@@ -105,7 +104,6 @@ class VisitorPortal:
 
                 # ── IDLE ─────────────────────────────────────────
                 # Either direction (L→T→R or R→T→L) can be entry or exit
-                # depending solely on whether a visitor is currently inside.
                 if self.state == State.IDLE:
                     if pir_name == "LEFT":
                         self.state      = State.SEQ_LR_P1
