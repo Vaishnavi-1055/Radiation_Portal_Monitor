@@ -18,17 +18,17 @@ ZMQ_CPS_PORT = 6002
 context = zmq.Context()
 cps_pub = context.socket(zmq.PUB)
 cps_pub.bind(f"tcp://*:{ZMQ_CPS_PORT}")
-print(f"✅ ZMQ CPS PUB bound to port {ZMQ_CPS_PORT}")
+print(f"ZMQ CPS PUB bound to port {ZMQ_CPS_PORT}")
 
 # ================= ZMQ PMT SUBSCRIBER =================
 ZMQ_PMT_PORT = 6005
 pmt_sub = context.socket(zmq.SUB)
 pmt_sub.connect(f"tcp://localhost:{ZMQ_PMT_PORT}")
 pmt_sub.setsockopt_string(zmq.SUBSCRIBE, "")
-print(f"✅ ZMQ PMT SUB connected to port {ZMQ_PMT_PORT}")
+print(f"ZMQ PMT SUB connected to port {ZMQ_PMT_PORT}")
 
 # ================= ALARM SETUP =================
-CPS_THRESHOLD = 1000   # 🔔 set threshold here
+CPS_THRESHOLD = 1000 
 alarm_mgr = AlarmManager(threshold=CPS_THRESHOLD)
 
 # ================= PMT DATA =================
@@ -71,7 +71,7 @@ slave_map = {
 }
 
 instrument = None
-instrument_lock = threading.Lock()   # ← protects shared instrument object
+instrument_lock = threading.Lock()   
 
 # Maximum registers to read for each slave
 MAX_REGS = {"Left": 75, "Top": 75, "Right": 75}
@@ -99,15 +99,12 @@ slave_state = {
 
 # ================= MODBUS CONNECT =================
 def connect_modbus():
-    """
-    (Re)connect the shared Modbus instrument.
-    Blocks until successful. Must be called while holding instrument_lock.
-    """
+
     global instrument
     while True:
         try:
             if not os.path.exists(com_port):
-                print(f"⚠️  Waiting for {com_port}")
+                print(f"Waiting for {com_port}")
                 time.sleep(RECONNECT_DELAY)
                 continue
 
@@ -121,20 +118,17 @@ def connect_modbus():
             instr.clear_buffers_before_each_transaction = True
 
             instrument = instr
-            print(f"✅ Modbus connected on {com_port}")
+            print(f"Modbus connected on {com_port}")
             return
 
         except Exception as e:
-            print(f"❌ Modbus connect error: {e}")
+            print(f"Modbus connect error: {e}")
             instrument = None
             time.sleep(RECONNECT_DELAY)
 
 # ================= READ SLAVE =================
 def read_slave(slave_id, name):
-    """
-    Read all registers for a given slave (one retry on failure).
-    Must be called while holding instrument_lock.
-    """
+
     instrument.address = slave_id
     try:
         return instrument.read_registers(0, MAX_REGS[name])
@@ -145,13 +139,9 @@ def read_slave(slave_id, name):
 
 # ================= HANDLE COMM ERROR =================
 def handle_comm_error(name, e):
-    """
-    Close and reconnect instrument after a slave comm failure.
-    Does NOT skip other slaves — caller continues to next slave after this.
-    Must be called while holding instrument_lock.
-    """
+
     global instrument
-    print(f"🔌 Modbus error ({name}): {e}")
+    print(f"Modbus error ({name}): {e}")
     try:
         instrument.serial.close()
     except Exception:
@@ -162,7 +152,7 @@ def handle_comm_error(name, e):
 # ================= START =================
 with instrument_lock:
     connect_modbus()
-print(f"📡 ZMQ Modbus CPS Publisher Started @ tcp://*:{ZMQ_CPS_PORT}")
+print(f"ZMQ Modbus CPS Publisher Started @ tcp://*:{ZMQ_CPS_PORT}")
 
 # ================= MAIN LOOP =================
 while True:
@@ -210,13 +200,13 @@ while True:
                 handle_comm_error(name, e)
 
         except Exception as e:
-            print(f"❌ Unexpected error ({name}): {e}")
+            print(f"Unexpected error ({name}): {e}")
 
         # ---- Stale check: mark if no valid data within STALE_TIMEOUT ----
         age = time.time() - slave_state[name]["last_success_time"]
         if age > STALE_TIMEOUT:
             if not slave_state[name]["stale"]:
-                print(f"⚠️  {name}: no valid data for {age:.1f}s — marking stale")
+                print(f"  {name}: no valid data for {age:.1f}s — marking stale")
             slave_state[name]["stale"] = True
 
         time.sleep(SLAVE_DELAY)

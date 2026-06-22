@@ -43,7 +43,7 @@ except Exception as e:
 
 # ---------------- Helper: Capture & Publish ----------------
 def capture_and_read_bytes(camera):
-    """Capture image to temp file, read bytes, delete temp file"""
+
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
         tmp_path = tmp.name
     try:
@@ -58,7 +58,7 @@ def capture_and_read_bytes(camera):
             pass
 
 def publish_image(cam_index, pir_name, img_bytes):
-    """Publish image with PIR name for proper naming in UI"""
+
     if img_bytes:
         msg = [
             TOPIC, 
